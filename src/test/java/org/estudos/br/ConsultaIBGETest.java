@@ -1,19 +1,32 @@
 package org.estudos.br;
 
 import org.json.JSONObject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.when;
 
 public class ConsultaIBGETest {
     private static final String ESTADOS_API_URL = "https://servicodados.ibge.gov.br/api/v1/localidades/estados/";
     private static final String DISTRITOS_API_URL = "https://servicodados.ibge.gov.br/api/v1/localidades/distritos/"; // Seguindo o padrão de nome
+
+    private HttpURLConnection connectionMock;
+
+    private static final String JSON_RESPONSE =
+            "{\"id\":31,\"sigla\":\"MG\",\"nome\":\"Minas Gerais\",\"regiao\":{\"id\":3,\"sigla\":\"SE\",\"nome\":\"Sudeste\"}}";
+
 
 
     @Test
@@ -68,5 +81,22 @@ public class ConsultaIBGETest {
         URL url = new URL(DISTRITOS_API_URL + id);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         return connection.getResponseCode();
+    }
+
+    @BeforeEach
+    public void setup() throws IOException {
+        MockitoAnnotations.openMocks(this); // Inicializando o Mock
+
+        // Configurando o Mock
+        InputStream inputStream = new ByteArrayInputStream(JSON_RESPONSE.getBytes());
+        when(connectionMock.getInputStream()).thenReturn(inputStream);
+    }
+
+    @Test
+    @DisplayName("Teste estado usando o Mock")
+    public void testConsultarEstadoComMock() throws IOException {
+        String uf = "MG"; // Estado que será consultado
+        String resposta = ConsultaIBGE.consultarEstado(uf); // Chama o método utilizado para teste
+        assertEquals(JSON_RESPONSE, resposta, "O JSON retornado não corresponde ao esperado."); // Verifica a resposta e o JSON esperado
     }
 }
